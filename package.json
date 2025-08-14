@@ -1,0 +1,11 @@
+{
+  "name": "robodadosoficial",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": { "start": "node index.js" },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.5",
+    "csv-parse": "^5.5.6",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
