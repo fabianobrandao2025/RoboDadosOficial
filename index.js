@@ -1,4 +1,4 @@
-// index.js - VERSÃO FINAL E LIMPA
+// index.js - // index.js - VERSÃO COMPLETA E CORRIGIDA
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
@@ -6,7 +6,6 @@ const { getCAInfo, loadData } = require('./data.js');
 
 async function connectToWhatsApp() {
   console.log('[BOT] Preparando a base de dados em segundo plano...');
-  // Inicia o carregamento dos dados do arquivo CSV
   loadData();
 
   const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
@@ -49,4 +48,16 @@ async function connectToWhatsApp() {
       if (dados.error) {
         resposta = dados.error;
       } else {
-        resposta = `*✅ Resultado da Consulta do CA: ${dados['Nº do CA']}*\n\n` + `*Data
+        resposta = `*✅ Resultado da Consulta do CA: ${dados['Nº do CA']}*\n\n` + `*Data de Validade:* ${dados['Data de Validade']}\n` + `*Situação:* ${dados['Situação']}\n` + `*Equipamento:* ${dados['Equipamento']}\n\n` + `*Fabricante:* ${dados['Fabricante']}`;
+      }
+    } else if (textoMensagem === 'oi' || textoMensagem === 'olá' || textoMensagem === 'ola') {
+      resposta = 'Olá! Para consultar um Certificado de Aprovação, envie uma mensagem no formato: *CA 12345*';
+    }
+
+    if (resposta) {
+      await sock.sendMessage(msg.key.remoteJid, { text: resposta });
+    }
+  });
+}
+
+connectToWhatsApp();
