@@ -1,34 +1,63 @@
-// data.js - VERSÃO DE DIAGNÓSTICO FINAL DO ARQUIVO CSV
 const fs = require('fs');
 const path = require('path');
+const { parse } = require('csv-parse');
 
-// As outras bibliotecas não são necessárias para este teste
+const caData = new Map();
 let isDataReady = false;
 
 function loadData() {
-  console.log('[DADOS] Iniciando diagnóstico do arquivo caepi.csv...');
-  try {
-    const csvFilePath = path.resolve(__dirname, 'caepi.csv');
-    
-    // Lê apenas os primeiros 1000 caracteres do arquivo, para vermos o cabeçalho
-    const fileSample = fs.readFileSync(csvFilePath, { encoding: 'latin1' }).substring(0, 1000);
+  console.log('[DADOS] Iniciando carregamento do arquivo caepi.csv...');
+  const csvFilePath = path.resolve(__dirname, 'caepi.csv');
+  
+  // Usamos 'latin1' que é a codificação correta para o arquivo do governo
+  const fileContent = fs.readFileSync(csvFilePath, 'latin1'); 
 
-    console.log('--- DIAGNÓSTICO DO ARQUIVO CSV ---');
-    console.log('Amostra das primeiras linhas do arquivo (como o robô está a ler):');
-    console.log('====================================');
-    console.log(fileSample);
-    console.log('====================================');
-    console.log('Por favor, copie e cole o texto acima (entre as linhas ===) para análise.');
-    console.log('--- FIM DO DIAGNÓSTICO ---');
+  const parser = parse(fileContent, {
+    delimiter: ';', // O separador do arquivo do governo é ';'
+    columns: true,  // Usa a primeira linha como cabeçalho
+    trim: true,
+    skip_empty_lines: true
+  });
 
-  } catch (err) {
+  parser.on('readable', function(){
+    let record;
+    while ((record = parser.read()) !== null) {
+      // Usamos o nome da coluna exato do arquivo que você enviou: 'CA'
+      const caKey = record['CA'];
+      if (caKey) {
+        caData.set(String(caKey).trim(), record);
+      }
+    }
+  });
+
+  parser.on('end', function(){
+    isDataReady = true;
+    console.log(`[DADOS] Base de dados carregada com sucesso. Total de ${caData.size} registros.`);
+  });
+
+  parser.on('error', function(err){
     console.error('[DADOS] ERRO AO LER O ARQUIVO CSV:', err.message);
-  }
+  });
 }
 
 function getCAInfo(caNumber) {
-  // Resposta padrão durante o diagnóstico
-  return { error: 'Robô em modo de diagnóstico. Verifique os logs do Render.' };
+  if (!isDataReady) {
+    return { error: 'A base de dados ainda está a ser carregada. Por favor, tente novamente em um minuto.' };
+  }
+  
+  const caInfo = caData.get(String(caNumber).trim());
+  if (caInfo) {
+    // Usamos os nomes de coluna exatos do arquivo que você enviou
+    return {
+      'Nº do CA': caInfo['CA'],
+      'Data de Validade': caInfo['Validade'],
+      'Situação': caInfo['Situacao'],
+      'Equipamento': caInfo['Equipamento'],
+      'Fabricante': caInfo['Fabricante']
+    };
+  } else {
+    return { error: `O CA "${caNumber}" não foi encontrado na base de dados.` };
+  }
 }
 
 module.exports = { getCAInfo, loadData };

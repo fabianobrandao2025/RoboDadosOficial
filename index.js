@@ -1,4 +1,3 @@
-// index.js - // index.js - VERSÃO COMPLETA E CORRIGIDA
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
