@@ -1,3 +1,20 @@
+// index.js - VERSÃO COM DIAGNÓSTICO
+const fs = require('fs');
+const path = require('path');
+
+// --- DIAGNÓSTICO DE ARQUIVOS ---
+// Este bloco vai nos mostrar todos os arquivos que o robô vê quando ele inicia.
+try {
+  console.log('[DIAGNÓSTICO] Verificando arquivos no diretório de execução...');
+  const files = fs.readdirSync(__dirname);
+  console.log('[DIAGNÓSTICO] Arquivos encontrados:', files);
+} catch (err) {
+  console.error('[DIAGNÓSTICO] Erro ao listar arquivos:', err);
+}
+console.log('--- FIM DO DIAGNÓSTICO DE ARQUIVOS ---');
+// --- FIM DO DIAGNÓSTICO ---
+
+
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
@@ -44,8 +61,8 @@ async function connectToWhatsApp() {
     if (matchCA) {
       const numeroCA = matchCA[2];
       const dados = getCAInfo(numeroCA); 
-      if (dados.erro) {
-        resposta = dados.erro;
+      if (dados.error) {
+        resposta = dados.error;
       } else {
         resposta = `*✅ Resultado da Consulta do CA: ${dados['Nº do CA']}*\n\n` + `*Data de Validade:* ${dados['Data de Validade']}\n` + `*Situação:* ${dados['Situação']}\n` + `*Equipamento:* ${dados['Equipamento']}\n\n` + `*Fabricante:* ${dados['Fabricante']}`;
       }
