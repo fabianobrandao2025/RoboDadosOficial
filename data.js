@@ -1,3 +1,4 @@
+// data.js - VERSÃO DE DIAGNÓSTICO DO ARQUIVO CSV
 const fs = require('fs');
 const path = require('path');
 const { parse } = require('csv-parse');
@@ -6,14 +7,14 @@ const caData = new Map();
 let isDataReady = false;
 
 function loadData() {
-  console.log('[DADOS] Iniciando carregamento do arquivo caepi.csv...');
+  console.log('[DADOS] Iniciando carregamento e diagnóstico do arquivo caepi.csv...');
   const csvFilePath = path.resolve(__dirname, 'caepi.csv');
-
-  // A fonte oficial dados.gov.br usa UTF-8, o que é ótimo!
-  const fileContent = fs.readFileSync(csvFilePath, 'utf-8'); 
+  
+  // Usamos 'latin1' que é uma codificação comum para arquivos do governo
+  const fileContent = fs.readFileSync(csvFilePath, 'latin1'); 
 
   const parser = parse(fileContent, {
-    delimiter: ';', // O separador do arquivo do governo é ';'
+    delimiter: ';',
     columns: true,
     trim: true,
     skip_empty_lines: true
@@ -21,9 +22,22 @@ function loadData() {
 
   parser.on('readable', function(){
     let record;
+    let firstRowProcessed = false;
     while ((record = parser.read()) !== null) {
-      // A coluna oficial chama-se 'CA'
-      const caKey = record['CA'];
+      // --- INÍCIO DO DIAGNÓSTICO ---
+      // Na primeira linha de dados, imprime as informações que precisamos
+      if (!firstRowProcessed) {
+        console.log('--- DIAGNÓSTICO DE COLUNAS ---');
+        console.log('Nomes das colunas encontrados no arquivo CSV:');
+        console.log(Object.keys(record));
+        console.log('Exemplo da primeira linha de dados:');
+        console.log(record);
+        console.log('--- FIM DO DIAGNÓSTICO ---');
+        firstRowProcessed = true;
+      }
+      // --- FIM DO DIAGNÓSTICO ---
+      
+      const caKey = record['Nº CA'] || record['NR_CA']; // Tentativa de carregar os dados
       if (caKey) {
         caData.set(String(caKey).trim(), record);
       }
@@ -32,7 +46,7 @@ function loadData() {
 
   parser.on('end', function(){
     isDataReady = true;
-    console.log(`[DADOS] Base de dados carregada com sucesso. Total de ${caData.size} registros.`);
+    console.log(`[DADOS] Base de dados carregada para teste. Total de ${caData.size} registros.`);
   });
 
   parser.on('error', function(err){
@@ -44,16 +58,15 @@ function getCAInfo(caNumber) {
   if (!isDataReady) {
     return { error: 'A base de dados ainda está a ser carregada. Por favor, tente novamente em um minuto.' };
   }
-
+  
   const caInfo = caData.get(String(caNumber).trim());
   if (caInfo) {
-    // Usamos os nomes de coluna do arquivo oficial
     return {
-      'Nº do CA': caInfo['CA'],
-      'Data de Validade': caInfo['Validade'],
-      'Situação': caInfo['Situacao'],
-      'Equipamento': caInfo['Equipamento'],
-      'Fabricante': caInfo['Fabricante']
+      'Nº do CA': caInfo['Nº CA'] || caInfo['NR_CA'],
+      'Data de Validade': caInfo['Data de Validade'],
+      'Situação': caInfo.Situação,
+      'Equipamento': caInfo['Descrição do Equipamento'] || caInfo.DS_EQUIPAMENTO,
+      'Fabricante': caInfo['Nome do Fabricante / Importador'] || caInfo.NO_FABRICANTE
     };
   } else {
     return { error: `O CA "${caNumber}" não foi encontrado na base de dados.` };
